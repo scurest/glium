@@ -307,6 +307,7 @@ unsafe impl<T: SurfaceTypeTrait + ResizeableSurface> Backend for GlutinBackend<T
 pub struct SimpleWindowBuilder {
     attributes: winit::window::WindowAttributes,
     config_template_builder: glutin::config::ConfigTemplateBuilder,
+    vsync: bool,
 }
 
 #[cfg(feature = "simple_window_builder")]
@@ -318,6 +319,7 @@ impl SimpleWindowBuilder {
                 .with_title("Simple Glium Window")
                 .with_inner_size(winit::dpi::PhysicalSize::new(800, 480)),
             config_template_builder: glutin::config::ConfigTemplateBuilder::new(),
+            vsync: false
 
         }
     }
@@ -334,6 +336,12 @@ impl SimpleWindowBuilder {
     /// Set the initial title for the window.
     pub fn with_title(mut self, title: &str) -> Self {
         self.attributes = self.attributes.with_title(title);
+        self
+    }
+
+    /// Requests the window be vsynced.
+    pub fn with_vsync(mut self, vsync: bool) -> Self {
+        self.vsync = vsync;
         self
     }
 
@@ -408,6 +416,14 @@ impl SimpleWindowBuilder {
         .unwrap()
         .make_current(&surface)
         .unwrap();
+
+        if self.vsync {
+            let _ = surface.set_swap_interval(
+                &current_context,
+                glutin::surface::SwapInterval::Wait(std::num::NonZeroU32::new(1).unwrap()),
+            );
+        }
+
         let display = Display::from_context_surface(current_context, surface).unwrap();
 
         (window, display)
